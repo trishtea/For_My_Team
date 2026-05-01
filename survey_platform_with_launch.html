@@ -1,0 +1,639 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font-sans);background:var(--color-background-tertiary);min-height:100vh}
+  .app{display:flex;flex-direction:column;min-height:600px}
+  .topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;padding:0 24px;height:52px;gap:0}
+  .nav-tabs{display:flex;height:52px}
+  .nav-tab{display:flex;align-items:center;gap:7px;padding:0 18px;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap}
+  .nav-tab svg{width:15px;height:15px;opacity:0.6}
+  .nav-tab.active{color:#185FA5;border-bottom-color:#185FA5;font-weight:500}
+  .nav-tab.active svg{opacity:1}
+  .nav-tab:hover:not(.active){color:var(--color-text-primary);background:var(--color-background-secondary)}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;border-radius:var(--border-radius-md);cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);transition:all 0.12s;white-space:nowrap}
+  .btn:hover{background:var(--color-background-secondary)}
+  .btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+  .btn-primary:hover{background:#0C447C;border-color:#0C447C}
+  .btn-sm{padding:5px 10px;font-size:12px}
+  .btn-ghost{border-color:transparent;background:transparent}
+  .btn-ghost:hover{background:var(--color-background-secondary);border-color:var(--color-border-tertiary)}
+  .page{display:none;flex:1}
+  .page.active{display:flex}
+
+  .build-layout{display:flex;width:100%;flex:1}
+  .sidebar{width:240px;min-width:240px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:16px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;max-height:600px}
+  .sidebar-section{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.6px;padding:10px 0 6px;margin-top:4px}
+  .sidebar-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;color:var(--color-text-secondary);transition:all 0.12s}
+  .sidebar-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+  .sidebar-item.active{background:#E6F1FB;color:#185FA5;font-weight:500}
+  .sidebar-item svg{width:14px;height:14px;flex-shrink:0}
+  .canvas{flex:1;padding:24px;overflow-y:auto;max-height:600px;background:var(--color-background-tertiary)}
+  .survey-header-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:20px 24px;margin-bottom:16px}
+  .survey-title-input{width:100%;font-size:18px;font-weight:500;border:none;background:transparent;color:var(--color-text-primary);font-family:var(--font-sans);outline:none;margin-bottom:6px}
+  .survey-desc-input{width:100%;font-size:13px;border:none;background:transparent;color:var(--color-text-secondary);font-family:var(--font-sans);outline:none;resize:none}
+  .q-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px 20px;margin-bottom:12px;position:relative;transition:border-color 0.15s}
+  .q-card:hover{border-color:var(--color-border-secondary)}
+  .q-card.selected{border-color:#185FA5;border-width:1px}
+  .q-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;margin-bottom:10px;font-weight:500}
+  .q-badge.likert{background:#E6F1FB;color:#185FA5}
+  .q-badge.grid{background:#EAF3DE;color:#3B6D11}
+  .q-badge.open{background:#FAEEDA;color:#854F0B}
+  .q-number{font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px}
+  .q-text{font-size:14px;color:var(--color-text-primary);font-weight:500;margin-bottom:14px;line-height:1.4}
+  .likert-row{display:flex;align-items:center;gap:0;margin-bottom:6px}
+  .likert-label{font-size:11px;color:var(--color-text-secondary);width:100px;flex-shrink:0}
+  .likert-label.right{text-align:right}
+  .likert-scale{display:flex;flex:1;justify-content:space-around;align-items:center;gap:4px}
+  .likert-opt{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+  .likert-opt input[type=radio]{width:14px;height:14px;accent-color:#185FA5}
+  .likert-opt span{font-size:10px;color:var(--color-text-tertiary)}
+  .multi-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);margin-bottom:8px}
+  .multi-label input[type=checkbox]{accent-color:#185FA5;width:12px;height:12px}
+  .grid-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px}
+  .grid-table th{font-size:11px;color:var(--color-text-secondary);font-weight:400;padding:6px 8px;text-align:center;border-bottom:0.5px solid var(--color-border-tertiary)}
+  .grid-table td{padding:7px 8px;border-bottom:0.5px solid var(--color-border-tertiary);text-align:center}
+  .grid-table td:first-child{text-align:left;color:var(--color-text-secondary);font-size:12px}
+  .grid-table input[type=radio],.grid-table input[type=checkbox]{accent-color:#185FA5;width:13px;height:13px}
+  .open-area{width:100%;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:10px 12px;font-size:13px;color:var(--color-text-tertiary);min-height:60px;background:var(--color-background-secondary);font-family:var(--font-sans);resize:none;outline:none}
+  .open-toolbar{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .mic-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;font-size:12px;color:var(--color-text-secondary);font-family:var(--font-sans)}
+  .mic-btn:hover{background:var(--color-background-primary);color:var(--color-text-primary)}
+  .q-actions{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary)}
+  .skip-logic-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#185FA5;cursor:pointer;padding:4px 0;background:none;border:none;font-family:var(--font-sans)}
+  .skip-logic-panel{margin-top:10px;padding:12px;background:#E6F1FB;border-radius:var(--border-radius-md);font-size:12px}
+  .skip-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .skip-row select{font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)}
+  .skip-row label{font-size:12px;color:#185FA5;white-space:nowrap}
+  .add-q-bar{background:var(--color-background-primary);border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:14px;text-align:center;margin-top:4px;cursor:pointer;transition:all 0.12s}
+  .add-q-bar:hover{border-color:#185FA5;background:#E6F1FB}
+  .add-q-bar span{font-size:13px;color:var(--color-text-secondary)}
+  .right-panel{width:220px;min-width:220px;background:var(--color-background-primary);border-left:0.5px solid var(--color-border-tertiary);padding:16px;overflow-y:auto;max-height:600px}
+  .rp-title{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px}
+  .rp-field{margin-bottom:14px}
+  .rp-label{font-size:11px;color:var(--color-text-tertiary);margin-bottom:5px}
+  .rp-select{width:100%;font-size:12px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .toggle-row span{font-size:12px;color:var(--color-text-secondary)}
+  .toggle{width:32px;height:18px;background:#185FA5;border-radius:20px;position:relative;cursor:pointer;flex-shrink:0}
+  .toggle.off{background:var(--color-border-secondary)}
+  .toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;right:2px;transition:right 0.15s}
+  .toggle.off::after{right:auto;left:2px}
+
+  .analyze-layout{display:flex;width:100%;flex:1}
+  .an-sidebar{width:220px;min-width:220px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:16px;overflow-y:auto;max-height:600px}
+  .an-main{flex:1;padding:20px;overflow-y:auto;max-height:600px;background:var(--color-background-tertiary)}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  .stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px;text-align:center}
+  .stat-num{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+  .stat-lbl{font-size:11px;color:var(--color-text-secondary);margin-top:3px}
+  .chart-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px 20px;margin-bottom:14px}
+  .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .chart-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+  .chart-subtitle{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+  .chart-controls{display:flex;gap:6px}
+  .bar-wrap{margin-bottom:8px}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .bar-label{font-size:12px;color:var(--color-text-secondary);width:130px;flex-shrink:0;text-align:right}
+  .bar-track{flex:1;height:24px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:500;color:#fff;white-space:nowrap}
+  .bar-pct{font-size:12px;color:var(--color-text-secondary);width:36px;text-align:right;flex-shrink:0}
+  .desc-table{width:100%;border-collapse:collapse;font-size:12px}
+  .desc-table th{font-size:11px;color:var(--color-text-secondary);font-weight:400;padding:7px 10px;border-bottom:0.5px solid var(--color-border-tertiary);text-align:left}
+  .desc-table td{padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+  .desc-table td.num{font-variant-numeric:tabular-nums;text-align:right}
+  .dot-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .dot-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .an-q-list{display:flex;flex-direction:column;gap:2px}
+  .an-q-item{padding:8px 10px;border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:var(--color-text-secondary);transition:all 0.12s;line-height:1.4}
+  .an-q-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+  .an-q-item.active{background:#E6F1FB;color:#185FA5}
+  .an-section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.6px;padding:10px 0 6px}
+
+  /* LAUNCH */
+  .launch-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--color-background-primary);padding:40px 24px;min-height:560px}
+  .launch-unpublished{display:flex;flex-direction:column;align-items:center;text-align:center;gap:0}
+  .launch-icon{width:52px;height:52px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+  .launch-h{font-size:20px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px;letter-spacing:-0.2px}
+  .launch-sub{font-size:14px;color:var(--color-text-secondary);margin-bottom:28px;line-height:1.5;max-width:360px}
+  .publish-btn{display:inline-flex;align-items:center;gap:0;border-radius:var(--border-radius-md);overflow:hidden;border:none;cursor:pointer}
+  .publish-btn-main{background:#185FA5;color:#fff;font-size:14px;font-weight:500;padding:10px 22px;font-family:var(--font-sans);border:none;cursor:pointer;transition:background 0.12s}
+  .publish-btn-main:hover{background:#0C447C}
+  .publish-btn-caret{background:#185FA5;color:#fff;padding:10px 12px;border-left:1px solid rgba(255,255,255,0.2);font-family:var(--font-sans);border-top:none;border-right:none;border-bottom:none;cursor:pointer;transition:background 0.12s;display:flex;align-items:center}
+  .publish-btn-caret:hover{background:#0C447C}
+  .launch-published{display:none;flex-direction:column;align-items:center;text-align:center;width:100%;max-width:500px}
+  .launch-success-badge{display:inline-flex;align-items:center;gap:6px;background:#EAF3DE;color:#3B6D11;font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;margin-bottom:20px}
+  .launch-success-badge svg{width:13px;height:13px}
+  .link-box{display:flex;align-items:center;width:100%;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);overflow:hidden;margin-bottom:20px;background:var(--color-background-secondary)}
+  .link-url{flex:1;padding:10px 14px;font-size:13px;color:var(--color-text-secondary);font-family:var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:transparent;border:none;outline:none}
+  .copy-btn{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--color-background-primary);border-left:0.5px solid var(--color-border-secondary);font-size:12px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;font-family:var(--font-sans);border-top:none;border-right:none;border-bottom:none;transition:background 0.12s}
+  .copy-btn:hover{background:var(--color-background-secondary)}
+  .share-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:20px}
+  .share-opt{display:flex;align-items:center;gap:10px;padding:12px 14px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;transition:all 0.12s;text-align:left}
+  .share-opt:hover{border-color:var(--color-border-secondary);background:var(--color-background-secondary)}
+  .share-opt-icon{width:30px;height:30px;border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .share-opt-label{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+  .share-opt-desc{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+  .launch-divider{width:100%;border:none;border-top:0.5px solid var(--color-border-tertiary);margin:4px 0 16px}
+  .unpublish-link{font-size:12px;color:var(--color-text-secondary);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .unpublish-link:hover{color:var(--color-text-primary)}
+
+  /* REPORT */
+  .report-layout{display:flex;width:100%;flex:1}
+  .rp-left{width:220px;min-width:220px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:16px;overflow-y:auto;max-height:600px}
+  .rp-canvas{flex:1;padding:20px;overflow-y:auto;max-height:600px;background:var(--color-background-tertiary)}
+  .report-page{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:32px;min-height:480px}
+  .report-chip{display:inline-block;font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:16px;background:#E6F1FB;color:#185FA5}
+  .report-h1{font-size:20px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+  .report-meta{font-size:12px;color:var(--color-text-secondary);margin-bottom:20px}
+  .report-section{margin-bottom:22px}
+  .report-h2{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+  .exec-textarea{width:100%;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:10px 12px;font-size:13px;color:var(--color-text-primary);background:var(--color-background-primary);font-family:var(--font-sans);resize:none;outline:none;line-height:1.6}
+  .exec-textarea:focus{border-color:#185FA5}
+  .graph-import-zone{border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);padding:14px;text-align:center;margin-bottom:12px}
+  .giz-text{font-size:12px;color:var(--color-text-secondary)}
+  .imported-graph{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;background:var(--color-background-secondary);margin-bottom:12px}
+  .ig-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:8px}
+  .mini-bars{display:flex;align-items:flex-end;gap:5px;height:56px}
+  .mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px}
+  .slide-thumb{width:100%;height:56px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);display:flex;flex-direction:row;align-items:center;cursor:pointer;transition:all 0.12s;font-size:12px;color:var(--color-text-secondary);gap:8px;padding:0 12px}
+  .slide-thumb.active{border-color:#185FA5}
+  .slide-thumb:hover{border-color:var(--color-border-primary)}
+  .export-bar{display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding:14px 16px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg)}
+  .ppt-icon{width:28px;height:28px;background:#C43E1C;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
+  .export-info{flex:1;margin:0 12px}
+  .export-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+  .export-sub{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+</style>
+
+<h2 class="sr-only">Survey research platform with Build, Analyze, Launch, and Report-Out modes</h2>
+
+<div class="app">
+  <div class="topbar">
+    <div class="nav-tabs">
+      <div class="nav-tab active" id="tab-build" onclick="switchTab('build')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        Build
+      </div>
+      <div class="nav-tab" id="tab-analyze" onclick="switchTab('analyze')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,12 6,7 9,10 14,4"/></svg>
+        Analyze
+      </div>
+      <div class="nav-tab" id="tab-launch" onclick="switchTab('launch')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3.5L13 7l-2.5 2.5.5 3.5L8 11.5 5 13l.5-3.5L3 7l3.5-1.5z"/></svg>
+        Launch
+      </div>
+      <div class="nav-tab" id="tab-report" onclick="switchTab('report')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1.5"/><line x1="6" y1="6" x2="10" y2="6"/><line x1="6" y1="9" x2="10" y2="9"/><line x1="6" y1="12" x2="8" y2="12"/></svg>
+        Report-Out
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div style="font-size:12px;color:var(--color-text-secondary)">Saved 2 min ago</div>
+      <button class="btn btn-sm">Preview</button>
+      <button class="btn btn-sm btn-primary" onclick="switchTab('launch')">Publish</button>
+    </div>
+  </div>
+
+  <!-- BUILD PAGE -->
+  <div class="page active" id="page-build">
+    <div class="build-layout">
+      <div class="sidebar">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:14px">Survey structure</div>
+        <div class="sidebar-item active" onclick="selectQ(this,1)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="8"/></svg>
+          Q1 · Brand awareness
+        </div>
+        <div class="sidebar-item" onclick="selectQ(this,2)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/></svg>
+          Q2 · Brand perception grid
+        </div>
+        <div class="sidebar-item" onclick="selectQ(this,3)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h5"/></svg>
+          Q3 · Open feedback
+        </div>
+        <div class="sidebar-item" onclick="selectQ(this,4)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/></svg>
+          Q4 · Overall satisfaction
+        </div>
+        <div class="sidebar-item" onclick="selectQ(this,5)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/></svg>
+          Q5 · Purchase intent grid
+        </div>
+        <div class="sidebar-section">Question types</div>
+        <div class="sidebar-item" onclick="addQ('likert')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#185FA5"><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r="5"/></svg>
+          + Likert scale
+        </div>
+        <div class="sidebar-item" onclick="addQ('grid')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#3B6D11"><rect x="2" y="2" width="5" height="5" rx="0.5"/><rect x="9" y="2" width="5" height="5" rx="0.5"/><rect x="2" y="9" width="5" height="5" rx="0.5"/><rect x="9" y="9" width="5" height="5" rx="0.5"/></svg>
+          + Grid question
+        </div>
+        <div class="sidebar-item" onclick="addQ('open')">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#854F0B"><path d="M3 4h10M3 8h7"/></svg>
+          + Open-ended
+        </div>
+      </div>
+      <div class="canvas" id="build-canvas">
+        <div class="survey-header-card">
+          <input class="survey-title-input" value="Kitchen Appliance Brand Perception Study 2025"/>
+          <textarea class="survey-desc-input" rows="2">This survey takes approximately 5 minutes. Your responses help us understand how consumers perceive leading kitchen appliance brands.</textarea>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <div style="font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><line x1="8" y1="4" x2="8" y2="9"/></svg>5 questions</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><polyline points="8,5 8,8 10,10"/></svg>~5 min</div>
+          </div>
+        </div>
+        <div class="q-card selected" id="qcard-1">
+          <div class="q-number">Q1</div>
+          <div class="q-badge likert">Likert scale</div>
+          <div class="q-text">How strongly do you agree with the following statement? "Brand X appliances are built with high-quality materials."</div>
+          <div class="multi-label"><input type="checkbox" checked><span>Allow multi-select (select all that apply)</span></div>
+          <div class="likert-row">
+            <span class="likert-label" style="font-size:11px;color:var(--color-text-secondary)">Strongly disagree</span>
+            <div class="likert-scale">
+              <div class="likert-opt"><input type="radio" name="q1" value="1"><span>1</span></div>
+              <div class="likert-opt"><input type="radio" name="q1" value="2"><span>2</span></div>
+              <div class="likert-opt"><input type="radio" name="q1" value="3" checked><span>3</span></div>
+              <div class="likert-opt"><input type="radio" name="q1" value="4"><span>4</span></div>
+              <div class="likert-opt"><input type="radio" name="q1" value="5"><span>5</span></div>
+            </div>
+            <span class="likert-label right" style="font-size:11px;color:var(--color-text-secondary)">Strongly agree</span>
+          </div>
+          <div class="q-actions">
+            <button class="skip-logic-btn" onclick="toggleSkip(1)">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h7M7 5l3 3-3 3"/><path d="M10 4v8"/></svg>Skip logic
+            </button>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="btn btn-sm btn-ghost">Duplicate</button>
+              <button class="btn btn-sm btn-ghost">Delete</button>
+            </div>
+          </div>
+          <div class="skip-logic-panel" id="skip-1" style="display:none">
+            <div style="font-size:12px;font-weight:500;color:#185FA5;margin-bottom:8px">Skip logic rule</div>
+            <div class="skip-row"><label>If answer is</label><select><option>1 (Strongly disagree)</option><option>2</option><option>3</option><option>4</option><option>5 (Strongly agree)</option></select><label>skip to</label><select><option>Q3</option><option>Q4</option><option>End of survey</option></select></div>
+            <button class="btn btn-sm" style="margin-top:4px">Add rule</button>
+          </div>
+        </div>
+        <div class="q-card" id="qcard-2">
+          <div class="q-number">Q2</div>
+          <div class="q-badge grid">Grid question</div>
+          <div class="q-text">Rate each kitchen appliance brand on the following attributes.</div>
+          <div class="multi-label" style="margin-bottom:10px"><input type="checkbox" checked><span>Allow multi-select per row</span></div>
+          <table class="grid-table">
+            <thead><tr><th style="text-align:left;width:140px">Brand</th><th>Innovative</th><th>Reliable</th><th>Stylish</th><th>Affordable</th><th>Eco-friendly</th></tr></thead>
+            <tbody>
+              <tr><td>KitchenCraft</td><td><input type="checkbox"></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+              <tr><td>NovaCook</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox" checked></td></tr>
+              <tr><td>HomeChef Pro</td><td><input type="checkbox"></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td></tr>
+              <tr><td>PureKitch</td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox" checked></td></tr>
+            </tbody>
+          </table>
+          <div class="q-actions">
+            <button class="skip-logic-btn" onclick="toggleSkip(2)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h7M7 5l3 3-3 3"/><path d="M10 4v8"/></svg>Skip logic</button>
+            <div style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-sm btn-ghost">Duplicate</button><button class="btn btn-sm btn-ghost">Delete</button></div>
+          </div>
+          <div class="skip-logic-panel" id="skip-2" style="display:none">
+            <div style="font-size:12px;font-weight:500;color:#185FA5;margin-bottom:8px">Skip logic rule</div>
+            <div class="skip-row"><label>If brand selected</label><select><option>KitchenCraft</option><option>NovaCook</option><option>HomeChef Pro</option></select><label>skip to</label><select><option>Q4</option><option>Q5</option><option>End of survey</option></select></div>
+            <button class="btn btn-sm" style="margin-top:4px">Add rule</button>
+          </div>
+        </div>
+        <div class="q-card" id="qcard-3">
+          <div class="q-number">Q3</div>
+          <div class="q-badge open">Open-ended</div>
+          <div class="q-text">In your own words, describe what comes to mind when you think about kitchen appliances and your home cooking experience.</div>
+          <textarea class="open-area" placeholder="Respondent types their answer here..."></textarea>
+          <div class="open-toolbar">
+            <button class="mic-btn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="1" width="5" height="9" rx="2.5"/><path d="M3 8.5a5 5 0 0 0 10 0"/><line x1="8" y1="13.5" x2="8" y2="15.5"/></svg>Speech-to-text</button>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">Max 500 characters</span>
+          </div>
+          <div class="q-actions">
+            <button class="skip-logic-btn" onclick="toggleSkip(3)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h7M7 5l3 3-3 3"/><path d="M10 4v8"/></svg>Skip logic</button>
+            <div style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-sm btn-ghost">Duplicate</button><button class="btn btn-sm btn-ghost">Delete</button></div>
+          </div>
+          <div class="skip-logic-panel" id="skip-3" style="display:none">
+            <div style="font-size:12px;font-weight:500;color:#185FA5;margin-bottom:8px">Skip logic rule</div>
+            <div class="skip-row"><label>If response contains</label><select><option>Any text</option><option>Is blank</option></select><label>skip to</label><select><option>Q5</option><option>End of survey</option></select></div>
+            <button class="btn btn-sm" style="margin-top:4px">Add rule</button>
+          </div>
+        </div>
+        <div class="add-q-bar" onclick="addQ('likert')"><span>+ Add question</span></div>
+      </div>
+      <div class="right-panel">
+        <div class="rp-title">Question settings</div>
+        <div class="rp-field"><div class="rp-label">Question type</div><select class="rp-select"><option>Likert scale</option><option>Grid question</option><option>Open-ended</option></select></div>
+        <div class="rp-field"><div class="rp-label">Scale points</div><select class="rp-select"><option>5-point (1–5)</option><option>7-point (1–7)</option><option>10-point (1–10)</option></select></div>
+        <div class="rp-field">
+          <div class="rp-label">Labels</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <input style="width:100%;font-size:12px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)" value="Strongly disagree">
+            <input style="width:100%;font-size:12px;padding:5px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)" value="Strongly agree">
+          </div>
+        </div>
+        <div style="border-top:0.5px solid var(--color-border-tertiary);margin:12px 0;padding-top:12px">
+          <div class="rp-title">Response requirements</div>
+          <div class="toggle-row"><span>Required</span><div class="toggle" onclick="this.classList.toggle('off')"></div></div>
+          <div class="toggle-row"><span>Multi-select</span><div class="toggle off" onclick="this.classList.toggle('off')"></div></div>
+          <div class="toggle-row"><span>Randomize order</span><div class="toggle off" onclick="this.classList.toggle('off')"></div></div>
+        </div>
+        <div style="border-top:0.5px solid var(--color-border-tertiary);margin:12px 0;padding-top:12px">
+          <div class="rp-title">Behavior</div>
+          <div class="toggle-row"><span>Skip logic</span><div class="toggle off" onclick="this.classList.toggle('off')"></div></div>
+          <div class="toggle-row"><span>Display logic</span><div class="toggle off" onclick="this.classList.toggle('off')"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYZE PAGE -->
+  <div class="page" id="page-analyze">
+    <div class="analyze-layout">
+      <div class="an-sidebar">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px">Brand Perception Study</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:14px">Closed Apr 28, 2025 · 312 responses</div>
+        <div class="an-section-label">Filter by question</div>
+        <div class="an-q-list">
+          <div class="an-q-item active" onclick="filterQ(this)">All questions</div>
+          <div class="an-q-item" onclick="filterQ(this)">Q1 · Brand awareness</div>
+          <div class="an-q-item" onclick="filterQ(this)">Q2 · Brand perception grid</div>
+          <div class="an-q-item" onclick="filterQ(this)">Q3 · Open feedback</div>
+          <div class="an-q-item" onclick="filterQ(this)">Q4 · Overall satisfaction</div>
+          <div class="an-q-item" onclick="filterQ(this)">Q5 · Purchase intent</div>
+        </div>
+        <div class="an-section-label" style="margin-top:12px">Segment by</div>
+        <select class="rp-select" style="width:100%;font-size:12px;margin-bottom:8px"><option>All respondents</option><option>Age 18–34</option><option>Age 35–54</option><option>Age 55+</option><option>Frequent home cooks</option></select>
+        <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:4px">Apply filters</button>
+      </div>
+      <div class="an-main">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-num">312</div><div class="stat-lbl">Total responses</div></div>
+          <div class="stat-card"><div class="stat-num">94%</div><div class="stat-lbl">Completion rate</div></div>
+          <div class="stat-card"><div class="stat-num">3.8</div><div class="stat-lbl">Avg. Likert score</div></div>
+          <div class="stat-card"><div class="stat-num">4m 22s</div><div class="stat-lbl">Avg. time</div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Q1 · "Brand X appliances are built with high-quality materials."</div><div class="chart-subtitle">Likert scale · 312 responses · Mean = 3.8 · SD = 0.91</div></div>
+            <div class="chart-controls"><button class="btn btn-sm">Table</button><button class="btn btn-sm btn-primary">Bar chart</button></div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar-row"><span class="bar-label">Strongly agree (5)</span><div class="bar-track"><div class="bar-fill" style="width:34%;background:#185FA5">34%</div></div><span class="bar-pct">34%</span></div>
+            <div class="bar-row"><span class="bar-label">Agree (4)</span><div class="bar-track"><div class="bar-fill" style="width:28%;background:#378ADD">28%</div></div><span class="bar-pct">28%</span></div>
+            <div class="bar-row"><span class="bar-label">Neutral (3)</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:#B5D4F4">20%</div></div><span class="bar-pct">20%</span></div>
+            <div class="bar-row"><span class="bar-label">Disagree (2)</span><div class="bar-track"><div class="bar-fill" style="width:12%;background:#D3D1C7">12%</div></div><span class="bar-pct">12%</span></div>
+            <div class="bar-row"><span class="bar-label">Strongly disagree (1)</span><div class="bar-track"><div class="bar-fill" style="width:6%;background:#888780">6%</div></div><span class="bar-pct">6%</span></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Q2 · Brand attribute grid — % selecting each attribute</div><div class="chart-subtitle">Grid question · Multi-select · 312 responses</div></div>
+            <div class="chart-controls"><button class="btn btn-sm">Table</button><button class="btn btn-sm btn-primary">Bar chart</button></div>
+          </div>
+          <div class="dot-legend">
+            <div class="dot-item"><div class="dot" style="background:#185FA5"></div>KitchenCraft</div>
+            <div class="dot-item"><div class="dot" style="background:#378ADD"></div>NovaCook</div>
+            <div class="dot-item"><div class="dot" style="background:#639922"></div>HomeChef Pro</div>
+            <div class="dot-item"><div class="dot" style="background:#BA7517"></div>PureKitch</div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="desc-table" style="min-width:420px">
+              <thead><tr><th>Attribute</th><th class="num" style="text-align:right">KitchenCraft</th><th class="num" style="text-align:right">NovaCook</th><th class="num" style="text-align:right">HomeChef Pro</th><th class="num" style="text-align:right">PureKitch</th></tr></thead>
+              <tbody>
+                <tr><td>Innovative</td><td class="num">42%</td><td class="num">71%</td><td class="num">38%</td><td class="num">55%</td></tr>
+                <tr><td>Reliable</td><td class="num">68%</td><td class="num">44%</td><td class="num">61%</td><td class="num">39%</td></tr>
+                <tr><td>Stylish</td><td class="num">57%</td><td class="num">63%</td><td class="num">29%</td><td class="num">48%</td></tr>
+                <tr><td>Affordable</td><td class="num">31%</td><td class="num">28%</td><td class="num">72%</td><td class="num">44%</td></tr>
+                <tr><td>Eco-friendly</td><td class="num">22%</td><td class="num">58%</td><td class="num">19%</td><td class="num">67%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Q4 · Overall satisfaction — descriptive statistics</div><div class="chart-subtitle">Likert scale · 5-point · 298 responses</div></div>
+            <div class="chart-controls"><button class="btn btn-sm btn-primary">Table</button><button class="btn btn-sm">Bar chart</button></div>
+          </div>
+          <table class="desc-table">
+            <thead><tr><th>Statistic</th><th class="num" style="text-align:right">All</th><th class="num" style="text-align:right">Age 18–34</th><th class="num" style="text-align:right">Age 35–54</th><th class="num" style="text-align:right">Age 55+</th></tr></thead>
+            <tbody>
+              <tr><td>Mean</td><td class="num">3.84</td><td class="num">4.01</td><td class="num">3.78</td><td class="num">3.62</td></tr>
+              <tr><td>Median</td><td class="num">4.00</td><td class="num">4.00</td><td class="num">4.00</td><td class="num">4.00</td></tr>
+              <tr><td>Std. deviation</td><td class="num">0.91</td><td class="num">0.82</td><td class="num">0.94</td><td class="num">1.02</td></tr>
+              <tr><td>% Agree/Strongly agree</td><td class="num">62%</td><td class="num">71%</td><td class="num">60%</td><td class="num">51%</td></tr>
+              <tr><td>N</td><td class="num">298</td><td class="num">112</td><td class="num">121</td><td class="num">65</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAUNCH PAGE -->
+  <div class="page" id="page-launch">
+    <div class="launch-page">
+      <!-- Pre-publish state -->
+      <div class="launch-unpublished" id="launch-pre">
+        <div class="launch-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--color-text-secondary)"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <div class="launch-h">Publish to generate a shareable link</div>
+        <div class="launch-sub">Thoroughly test your survey before collecting respondent data.</div>
+        <div class="publish-btn">
+          <button class="publish-btn-main" onclick="publishSurvey()">Publish</button>
+          <button class="publish-btn-caret">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,6 8,10 12,6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Post-publish state -->
+      <div class="launch-published" id="launch-post">
+        <div class="launch-success-badge">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,8 6,11 13,4"/></svg>
+          Published
+        </div>
+        <div class="launch-h" style="margin-bottom:6px">Your survey is live</div>
+        <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:24px">Share the link below to start collecting responses.</div>
+
+        <div class="link-box">
+          <input class="link-url" readonly value="https://survey.research.io/s/kitchen-brand-2025" id="link-input"/>
+          <button class="copy-btn" onclick="copyLink()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>
+            <span id="copy-label">Copy link</span>
+          </button>
+        </div>
+
+        <div class="share-options">
+          <div class="share-opt">
+            <div class="share-opt-icon" style="background:#E6F1FB">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#185FA5" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><polyline points="2,4 8,9 14,4"/></svg>
+            </div>
+            <div><div class="share-opt-label">Email</div><div class="share-opt-desc">Send to a list</div></div>
+          </div>
+          <div class="share-opt">
+            <div class="share-opt-icon" style="background:#EAF3DE">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#3B6D11" stroke-width="1.5"><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2z"/><path d="M2 8h12M8 2c-1.5 2-2.5 3.8-2.5 6s1 4 2.5 6M8 2c1.5 2 2.5 3.8 2.5 6s-1 4-2.5 6"/></svg>
+            </div>
+            <div><div class="share-opt-label">Embed</div><div class="share-opt-desc">Add to a website</div></div>
+          </div>
+          <div class="share-opt">
+            <div class="share-opt-icon" style="background:#FAEEDA">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#854F0B" stroke-width="1.5"><rect x="3" y="3" width="10" height="10" rx="2"/><path d="M3 6h10M6 3v10"/></svg>
+            </div>
+            <div><div class="share-opt-label">QR code</div><div class="share-opt-desc">For print or events</div></div>
+          </div>
+          <div class="share-opt">
+            <div class="share-opt-icon" style="background:#F1EFE8">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#5F5E5A" stroke-width="1.5"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><line x1="6" y1="7" x2="10" y2="5"/><line x1="6" y1="9" x2="10" y2="11"/></svg>
+            </div>
+            <div><div class="share-opt-label">Share link</div><div class="share-opt-desc">Copy &amp; paste anywhere</div></div>
+          </div>
+        </div>
+
+        <hr class="launch-divider"/>
+        <span class="unpublish-link" onclick="unpublishSurvey()">Unpublish survey</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT PAGE -->
+  <div class="page" id="page-report">
+    <div class="report-layout">
+      <div class="rp-left">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px">Report slides</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="slide-thumb active"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/></svg>Cover slide</div>
+          <div class="slide-thumb" onclick="setSlide(this)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14L5 8l3 4 3-5 3 3"/></svg>Key findings</div>
+          <div class="slide-thumb" onclick="setSlide(this)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="0.5"/><rect x="9" y="2" width="5" height="5" rx="0.5"/><rect x="2" y="9" width="5" height="5" rx="0.5"/><rect x="9" y="9" width="5" height="5" rx="0.5"/></svg>Brand grid</div>
+          <div class="slide-thumb" onclick="setSlide(this)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><polyline points="8,5 8,8 11,8"/></svg>Satisfaction</div>
+          <div class="slide-thumb" onclick="setSlide(this)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7"/></svg>Recommendations</div>
+          <div class="slide-thumb" style="border-style:dashed"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg><span style="color:var(--color-text-tertiary)">Add slide</span></div>
+        </div>
+        <div style="border-top:0.5px solid var(--color-border-tertiary);margin-top:16px;padding-top:14px">
+          <div class="rp-title">Import from Analyze</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:var(--color-text-secondary)" onclick="importGraph(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L5 7l3 3 3-4 3 2"/></svg>Q1 · Quality perception</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:var(--color-text-secondary)" onclick="importGraph(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="0.5"/><rect x="9" y="2" width="5" height="5" rx="0.5"/></svg>Q2 · Brand attributes</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;font-size:12px;color:var(--color-text-secondary)" onclick="importGraph(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/></svg>Q4 · Satisfaction</div>
+          </div>
+        </div>
+      </div>
+      <div class="rp-canvas">
+        <div class="report-page">
+          <div class="report-chip">Confidential · Research Report</div>
+          <div class="report-h1">Kitchen Appliance Brand Perception Study</div>
+          <div class="report-meta">April 2025 · N = 312 · Prepared by Research Team</div>
+          <div class="report-section">
+            <div class="report-h2">Executive summary</div>
+            <textarea class="exec-textarea" rows="5">KitchenCraft leads on reliability (68%) while NovaCook is perceived as most innovative (71%) and eco-friendly (58%). Overall brand satisfaction averages 3.84 out of 5, with younger respondents (18–34) rating brands significantly higher. PureKitch outperforms peers on eco-credentials but trails on reliability. Key opportunity: eco-friendly positioning is underutilized across all brands relative to consumer demand.</textarea>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <button class="btn btn-sm">Format text</button>
+              <button class="btn btn-sm" onclick="sendPrompt('Write a more detailed executive summary for a kitchen appliance brand perception study. Key findings: KitchenCraft leads reliability at 68%, NovaCook leads innovation at 71%, overall satisfaction mean is 3.84/5. Include strategic implications.')">AI draft ↗</button>
+            </div>
+          </div>
+          <div class="report-section">
+            <div class="report-h2">Charts & data</div>
+            <div class="graph-import-zone" id="drop-zone"><div class="giz-text">Import a chart from Analyze using the sidebar →</div></div>
+            <div id="imported-graphs"></div>
+          </div>
+          <div class="report-section">
+            <div class="report-h2">Recommendations</div>
+            <textarea class="exec-textarea" rows="4">1. Invest in eco-friendly messaging across KitchenCraft and HomeChef Pro lines — current perception gap vs. NovaCook presents risk.&#10;2. Target age 55+ with reliability-focused campaigns given lower satisfaction scores.&#10;3. NovaCook should capitalize on innovation perception to defend premium pricing.</textarea>
+          </div>
+        </div>
+        <div class="export-bar">
+          <div class="ppt-icon">P</div>
+          <div class="export-info"><div class="export-title">Export to PowerPoint</div><div class="export-sub">5 slides · Includes all imported charts and text</div></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-sm">Preview deck</button><button class="btn btn-sm btn-primary" onclick="exportPPT(event)">Export .pptx</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('page-'+tab).classList.add('active');
+}
+function selectQ(el,n) {
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.q-card').forEach(c=>c.classList.remove('selected'));
+  const q=document.getElementById('qcard-'+n);
+  if(q){q.classList.add('selected');q.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+function toggleSkip(n) {
+  const p=document.getElementById('skip-'+n);
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+}
+function addQ(type) {
+  const labels={likert:'Likert scale',grid:'Grid question',open:'Open-ended'};
+  const badge={likert:'likert',grid:'grid',open:'open'};
+  const canvas=document.getElementById('build-canvas');
+  const addBar=canvas.querySelector('.add-q-bar');
+  const n=canvas.querySelectorAll('.q-card').length+1;
+  const card=document.createElement('div');
+  card.className='q-card';
+  let inner=`<div class="q-number">Q${n}</div><div class="q-badge ${badge[type]}">${labels[type]}</div>
+  <input style="width:100%;font-size:14px;font-weight:500;border:none;background:transparent;color:var(--color-text-primary);font-family:var(--font-sans);outline:none;margin-bottom:12px" placeholder="Type your question here..."/>`;
+  if(type==='likert'){
+    inner+=`<div class="multi-label"><input type="checkbox"><span>Allow multi-select</span></div>
+    <div class="likert-row"><span class="likert-label" style="font-size:11px;color:var(--color-text-secondary)">Strongly disagree</span>
+    <div class="likert-scale">${[1,2,3,4,5].map(v=>`<div class="likert-opt"><input type="radio" name="qn${n}" value="${v}"><span>${v}</span></div>`).join('')}</div>
+    <span class="likert-label right" style="font-size:11px;color:var(--color-text-secondary)">Strongly agree</span></div>`;
+  } else if(type==='grid'){
+    inner+=`<div class="multi-label" style="margin-bottom:10px"><input type="checkbox"><span>Allow multi-select per row</span></div>
+    <table class="grid-table"><thead><tr><th style="text-align:left">Row item</th><th>Option A</th><th>Option B</th><th>Option C</th></tr></thead>
+    <tbody><tr><td><input style="border:none;background:transparent;font-size:12px;color:var(--color-text-secondary);outline:none" value="Item 1"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+    <tr><td><input style="border:none;background:transparent;font-size:12px;color:var(--color-text-secondary);outline:none" value="Item 2"></td><td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr></tbody></table>`;
+  } else {
+    inner+=`<textarea class="open-area" placeholder="Respondent types here..."></textarea>
+    <div class="open-toolbar"><button class="mic-btn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5.5" y="1" width="5" height="9" rx="2.5"/><path d="M3 8.5a5 5 0 0 0 10 0"/><line x1="8" y1="13.5" x2="8" y2="15.5"/></svg>Speech-to-text</button></div>`;
+  }
+  inner+=`<div class="q-actions"><div style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-sm btn-ghost" onclick="this.closest('.q-card').remove()">Delete</button></div></div>`;
+  card.innerHTML=inner;
+  canvas.insertBefore(card,addBar);
+}
+function filterQ(el) {
+  document.querySelectorAll('.an-q-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+function setSlide(el) {
+  document.querySelectorAll('.slide-thumb').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+function publishSurvey() {
+  document.getElementById('launch-pre').style.display='none';
+  document.getElementById('launch-post').style.display='flex';
+}
+function unpublishSurvey() {
+  document.getElementById('launch-post').style.display='none';
+  document.getElementById('launch-pre').style.display='flex';
+}
+function copyLink() {
+  const lbl=document.getElementById('copy-label');
+  lbl.textContent='Copied!';
+  setTimeout(()=>lbl.textContent='Copy link',2000);
+}
+const barData=[34,28,20,12,6];
+const colors=['#185FA5','#378ADD','#B5D4F4','#D3D1C7','#888780'];
+function importGraph(el) {
+  const label=el.querySelector('span').textContent;
+  const container=document.getElementById('imported-graphs');
+  document.getElementById('drop-zone').style.display='none';
+  const g=document.createElement('div');g.className='imported-graph';
+  const barsHTML=barData.map((v,i)=>`<div class="mini-bar" style="height:${v*1.4}px;background:${colors[i]}"></div>`).join('');
+  g.innerHTML=`<div class="ig-label">${label}</div><div class="mini-bars">${barsHTML}</div>
+  <div style="display:flex;justify-content:space-between;margin-top:8px"><span style="font-size:11px;color:var(--color-text-tertiary)">Imported from Analyze</span><button class="btn btn-sm btn-ghost" style="font-size:11px;padding:2px 8px" onclick="this.closest('.imported-graph').remove()">Remove</button></div>`;
+  container.appendChild(g);
+  el.style.background='#EAF3DE';el.style.borderColor='#639922';el.style.color='#3B6D11';
+}
+function exportPPT(e) {
+  const btn=e.target;btn.textContent='Preparing...';btn.disabled=true;
+  setTimeout(()=>{btn.textContent='Downloaded!';setTimeout(()=>{btn.textContent='Export .pptx';btn.disabled=false;},2000);},1500);
+}
+</script>
